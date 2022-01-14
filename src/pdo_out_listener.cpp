@@ -40,7 +40,6 @@
 /*****************************************************************************/
 
 #include "pdo_out_listener.h"
-#include "ether_ros/ModifyPDOVariables.h"
 // #include "ethercat_slave.h"
 #include "utilities.h"
 #include "vector"
@@ -48,8 +47,10 @@
 #include "ether_ros.h"
 #include <iostream>
 #include <string>
+#include <ether_ros/PDOOut.h>
 
-void PDOOutListener::pdo_out_callback(const ether_ros::ModifyPDOVariables::ConstPtr &new_var)
+
+void PDOOutListener::pdo_out_callback(const ether_ros::PDOOut::ConstPtr &new_var)
 {
     pthread_spin_lock(&lock);
     uint8_t slave_id = new_var->slave_id;
@@ -68,104 +69,80 @@ void PDOOutListener::pdo_out_callback(const ether_ros::ModifyPDOVariables::Const
     }
     pthread_spin_unlock(&lock);
 }
-void PDOOutListener::modify_pdo_variable(int slave_id, const ether_ros::ModifyPDOVariables::ConstPtr &new_var)
+/** Write a 16-bit unsigned value to EtherCAT and advance the data pointer.
+ *
+ * \param DATA EtherCAT data pointer
+ * \param VAL new value
+ */
+#define WRITE_U16(DATA, VAL) \
+    do { \
+        EC_WRITE_U16(DATA, VAL); \
+        ROS_INFO_STREAM("" << sizeof(VAL) << "-byte write of \t" << unsigned(VAL) << " to \t" << (DATA)); \
+        (DATA) += sizeof(VAL); \
+    } while (0)
+
+/** Write a 8-bit unsigned value to EtherCAT and advance the data pointer.
+ *
+ * \param DATA EtherCAT data pointer
+ * \param VAL new value
+ */
+#define WRITE_U8(DATA, VAL) \
+    do { \
+        EC_WRITE_U8(DATA, VAL); \
+        ROS_INFO_STREAM("" << sizeof(VAL) << "-byte write of \t" << unsigned(VAL) << " to \t" << (DATA)); \
+        (DATA) += sizeof(VAL); \
+    } while (0)
+
+/** Write a 32-bit unsigned value to EtherCAT and advance the data pointer.
+ *
+ * \param DATA EtherCAT data pointer
+ * \param VAL new value
+ */
+#define WRITE_U32(DATA, VAL) \
+    do { \
+        EC_WRITE_U32(DATA, VAL); \
+        ROS_INFO_STREAM("" << sizeof(VAL) << "-byte write of \t" << unsigned(VAL) << " to \t" << (DATA)); \
+        (DATA) += sizeof(VAL); \
+    } while (0)
+
+
+#define TX1_INDEX 0
+#define TX2_INDEX 7
+#define TX3_INDEX 26
+
+void PDOOutListener::modify_pdo_variable(int slave_id, const ether_ros::PDOOut::ConstPtr &new_var)
 {
-    std::string type = new_var->type;
+    int8_t type = new_var->txtype;
 
-    type = utilities::trim(type);
+    if (type == ether_ros::PDOOut::TX1) {
+        uint8_t *dataPtr = (process_data_buf +
+                                               slave_id * (num_process_data_out + num_process_data_in) + TX1_INDEX);
 
-    switch (int_type_map_[type])
-    {
-    case 0:
+        EC_WRITE_U16(dataPtr + 0, new_var->tx1_control_word);
+        EC_WRITE_U8 (dataPtr + 2, new_var->tx1_mode_of_operation);
+        EC_WRITE_U32(dataPtr + 3, new_var->tx1_target_position);
 
-    {
-        uint8_t *new_data_ptr = (process_data_buf + slave_id * (num_process_data_out + num_process_data_in) + new_var->index);
-        bool value = new_var->bool_value;
-        ROS_INFO("New value will be: %d\n", value);
-        EC_WRITE_BIT(new_data_ptr, new_var->subindex, value);
-        break;
-    }
+    } else if (type == ether_ros::PDOOut::TX2) {
+        auto *dataPtr = (process_data_buf + slave_id * (num_process_data_out + num_process_data_in) + TX2_INDEX);
 
-    case 1:
+        WRITE_U16(dataPtr, new_var->tx2_control_word);
+        WRITE_U8(dataPtr, new_var->tx2_mode_of_operation);
+        WRITE_U32(dataPtr, new_var->tx2_target_position);
+        WRITE_U32(dataPtr, new_var->tx2_velocity);
+        WRITE_U32(dataPtr, new_var->tx2_target_acceleration);
+        WRITE_U32(dataPtr, new_var->tx2_target_deceleration);
 
-    {
-        uint8_t *new_data_ptr = (uint8_t *)(process_data_buf + slave_id * (num_process_data_out + num_process_data_in) + new_var->index);
-        uint8_t value = new_var->uint8_value;
-        ROS_INFO("New value will be: %d\n", value);
-        EC_WRITE_U8(new_data_ptr, value);
-        break;
-    }
+    } else if (type == ether_ros::PDOOut::TX3) {
+        auto *dataPtr = (process_data_buf + slave_id * (num_process_data_out + num_process_data_in) + TX3_INDEX);
 
-    case 2:
+        WRITE_U16(dataPtr, new_var->tx3_control_word);
+        WRITE_U8(dataPtr,  new_var->tx3_mode_of_operation);
+        WRITE_U32(dataPtr, new_var->tx3_target_acceleration);
+        WRITE_U32(dataPtr, new_var->tx3_target_deceleration);
+        WRITE_U32(dataPtr, new_var->tx3_target_velocity);
 
-    {
-        int8_t *new_data_ptr = (int8_t *)(process_data_buf + slave_id * (num_process_data_out + num_process_data_in) + new_var->index);
-        int8_t value = new_var->int8_value;
-        ROS_INFO("New value will be: %d\n", value);
-        EC_WRITE_S8(new_data_ptr, value);
-        break;
-    }
-
-    case 3:
-
-    {
-        uint16_t *new_data_ptr = (uint16_t *)(process_data_buf + slave_id * (num_process_data_out + num_process_data_in) + new_var->index);
-        // printf("O:");
-        // for(int j = 0 ; j < 24; j++)
-        //     printf(" %2.2x", *(new_var->value[j]);
-        // printf("\n");
-        uint16_t value = new_var->uint16_value;
-        ROS_INFO("New value will be: %d\n", value);
-        EC_WRITE_U16(new_data_ptr, value);
-        break;
-    }
-
-    case 4:
-    {
-        int16_t *new_data_ptr = (int16_t *)(process_data_buf + slave_id * (num_process_data_out + num_process_data_in) + new_var->index);
-        int16_t value = new_var->int16_value;
-        ROS_INFO("New value will be: %d\n", value);
-        EC_WRITE_S16(new_data_ptr, value);
-        break;
-    }
-
-    case 5:
-
-    {
-        uint32_t *new_data_ptr = (uint32_t *)(process_data_buf + slave_id * (num_process_data_out + num_process_data_in) + new_var->index);
-        uint32_t value = new_var->uint32_value;
-        ROS_INFO("New value will be: %d\n", value);
-        EC_WRITE_U32(new_data_ptr, value);
-        break;
-    }
-    case 6:
-    {
-        int32_t *new_data_ptr = (int32_t *)(process_data_buf + slave_id * (num_process_data_out + num_process_data_in) + new_var->index);
-        int32_t value = new_var->int32_value;
-        ROS_INFO("New value will be: %d\n", value);
-        EC_WRITE_S32(new_data_ptr, value);
-        break;
-    }
-    case 7:
-
-    {
-        uint64_t *new_data_ptr = (uint64_t *)(process_data_buf + new_var->slave_id * (num_process_data_out + num_process_data_in) + new_var->index);
-        uint64_t value = new_var->uint64_value;
-        EC_WRITE_U64(new_data_ptr, value);
-        break;
-    }
-
-    case 8:
-
-    {
-        int64_t *new_data_ptr = (int64_t *)(process_data_buf + slave_id * (num_process_data_out + num_process_data_in) + new_var->index);
-        int64_t value = new_var->int64_value;
-        EC_WRITE_S64(new_data_ptr, value);
-        break;
-    }
-    default:
-        ROS_ERROR("default handle called (shouldn't): check what you send to the /pdo_listener\n");
-        break;
+    } else if (type == ether_ros::PDOOut::READONLY) {
+        ROS_ERROR("PDOOutListener got a readonly PDO");
     }
 }
 void PDOOutListener::init(ros::NodeHandle &n)

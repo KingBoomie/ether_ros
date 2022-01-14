@@ -117,7 +117,7 @@ int PERIOD_NS;
 int main(int argc, char **argv)
 {
     int ret;
-    std::string slave_names[4] = {"front_left_leg", "front_right_leg", "back_right_leg", "back_left_leg"};
+    std::string slave_names[4] = {"servo"};
 
     ros::init(argc, argv, "ether_ros");
 

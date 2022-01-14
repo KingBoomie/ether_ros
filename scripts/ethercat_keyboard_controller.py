@@ -1,10 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/python3.8
 from cmd import Cmd
 import sys
 import subprocess
 import time
 
 import rospy
+
 from ether_ros.srv import EthercatCommd
 from ether_ros.msg import ModifyPDOVariables
 import std_msgs

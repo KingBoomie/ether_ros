@@ -1,38 +1,12 @@
-
-
 ethercat_slaves :
-    front_left_leg :
-        vendor_id: 0x00000A12
+    servo:
+        vendor_id: 0x00000a88
         alias : 0
         position: 0
-        product_code: 0x00a986fd
-        assign_activate: 0x0700
-        input_port: 0x6010
-        output_port: 0x7000
-    front_right_leg :
-        vendor_id: 0x00000A12
-        alias : 0
-        position: 1
-        product_code: 0x00a986fd
-        assign_activate: 0x0700
-        input_port: 0x6010
-        output_port: 0x7000
-    back_right_leg :
-        vendor_id: 0x00000A12
-        alias : 0
-        position: 2
-        product_code: 0x00a986fd
-        assign_activate: 0x0700
-        input_port: 0x6010
-        output_port: 0x7000
-    back_left_leg :
-        vendor_id: 0x00000A12
-        alias : 0
-        position: 3
-        product_code: 0x00a986fd
-        assign_activate: 0x0700
-        input_port: 0x6010
-        output_port: 0x7000
-    period_ns: 1000000
-    run_time: 360000
-    sync0_shift: 55000
+        product_code: 0x0a880001
+        assign_activate: 0x0300 # what
+        input_port: 0x6041
+        output_port: 0x6040
+    period_ns: 1000000  # what
+    run_time: 360000  # what
+    sync0_shift: 55000  # what

@@ -69,31 +69,20 @@ void PDOOutPublisherTimer::timer_callback(const ros::TimerEvent &event)
         Insert code here ...
 
         */
-        pdo_out.state_machine = process_input_bit(data_ptr, 0, 0);
-        pdo_out.initialize_clock = process_input_bit(data_ptr, 0, 1);
-        pdo_out.initialize_angles = process_input_bit(data_ptr, 0, 2);
-        pdo_out.inverse_kinematics = process_input_bit(data_ptr, 0, 3);
-        pdo_out.blue_led = process_input_bit(data_ptr, 0, 4);
-        pdo_out.red_led = process_input_bit(data_ptr, 0, 5);
-        pdo_out.button_1 = process_input_bit(data_ptr, 0, 6);
-        pdo_out.button_2 = process_input_bit(data_ptr, 0, 7);
-        pdo_out.sync = process_input_int8(data_ptr, 1);
-        pdo_out.desired_x_value = process_input_int32(data_ptr, 2);
-        pdo_out.filter_bandwidth = process_input_uint16(data_ptr, 6);
-        pdo_out.desired_y_value = process_input_int32(data_ptr, 8);
-        pdo_out.kp_100_knee = process_input_int16(data_ptr, 12);
-        pdo_out.kd_1000_knee = process_input_int16(data_ptr, 14);
-        pdo_out.ki_100_knee = process_input_int16(data_ptr, 16);
-        pdo_out.kp_100_hip = process_input_int16(data_ptr, 18);
-        pdo_out.kd_1000_hip = process_input_int16(data_ptr, 20);
-        pdo_out.ki_100_hip = process_input_int16(data_ptr, 22);
-        pdo_out.x_cntr_traj1000 = process_input_int16(data_ptr, 24);
-        pdo_out.y_cntr_traj1000 = process_input_int16(data_ptr, 26);
-        pdo_out.a_ellipse100 = process_input_int16(data_ptr, 28);
-        pdo_out.b_ellipse100 = process_input_int16(data_ptr, 30);
-        pdo_out.traj_freq100 = process_input_int16(data_ptr, 32);
-        pdo_out.phase_deg = process_input_int16(data_ptr, 34);
-        pdo_out.flatness_param100 = process_input_int16(data_ptr, 36);
+        pdo_out.tx1_control_word = process_input_uint16(data_ptr,0);
+        pdo_out.tx1_mode_of_operation = process_input_uint8(data_ptr,2);
+        pdo_out.tx1_target_position = process_input_uint32(data_ptr,3);
+        pdo_out.tx2_control_word = process_input_uint16(data_ptr,7);
+        pdo_out.tx2_mode_of_operation = process_input_uint8(data_ptr,9);
+        pdo_out.tx2_target_position = process_input_uint32(data_ptr,10);
+        pdo_out.tx2_velocity = process_input_uint32(data_ptr,14);
+        pdo_out.tx2_target_acceleration = process_input_uint32(data_ptr,18);
+        pdo_out.tx2_target_deceleration = process_input_uint32(data_ptr,22);
+        pdo_out.tx3_control_word = process_input_uint16(data_ptr,26);
+        pdo_out.tx3_mode_of_operation = process_input_uint8(data_ptr,28);
+        pdo_out.tx3_target_acceleration = process_input_uint32(data_ptr,29);
+        pdo_out.tx3_target_deceleration = process_input_uint32(data_ptr,33);
+        pdo_out.tx3_target_velocity = process_input_uint32(data_ptr,37);
 
         /*
             .....

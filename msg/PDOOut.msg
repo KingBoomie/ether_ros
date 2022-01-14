@@ -1,27 +1,26 @@
 Header header
 uint8 slave_id
-bool state_machine
-bool initialize_clock
-bool initialize_angles
-bool inverse_kinematics
-bool blue_led
-bool red_led
-bool button_1
-bool button_2
-int8 sync
-int32 desired_x_value
-uint16 filter_bandwidth
-int32 desired_y_value
-int16 kp_100_knee
-int16 kd_1000_knee
-int16 ki_100_knee
-int16 kp_100_hip
-int16 kd_1000_hip
-int16 ki_100_hip
-int16 x_cntr_traj1000
-int16 y_cntr_traj1000
-int16 a_ellipse100
-int16 b_ellipse100
-int16 traj_freq100
-int16 phase_deg
-int16 flatness_param100
+
+uint16 tx1_control_word
+uint8  tx1_mode_of_operation
+uint32 tx1_target_position
+
+uint16 tx2_control_word
+uint8  tx2_mode_of_operation
+uint32 tx2_target_position
+uint32 tx2_velocity
+uint32 tx2_target_acceleration
+uint32 tx2_target_deceleration
+
+uint16 tx3_control_word
+uint8  tx3_mode_of_operation
+uint32 tx3_target_acceleration
+uint32 tx3_target_deceleration
+uint32 tx3_target_velocity
+
+int8 READONLY=0
+int8 TX1=1
+int8 TX2=2
+int8 TX3=3
+int8 txtype
+

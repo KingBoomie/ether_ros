@@ -42,12 +42,64 @@
 #include "ethercat_slave.h"
 #include "ether_ros.h"
 
+/* Master 0, Slave 0, "ECR60V202"
+ * Vendor ID:       0x00000a88
+ * Product code:    0x0a880001
+ * Revision number: 0x00000202
+ */
+
+ec_pdo_entry_info_t pdo_entries[] = {
+    {0x6040, 0x00, 16}, /* Control Word */
+    {0x6060, 0x00, 8}, /* ModeOfOperation */
+    {0x607a, 0x00, 32}, /* Profile Target Position */
+    {0x6081, 0x00, 32}, /* Profile Velocity */
+    {0x6083, 0x00, 32}, /* Profile Target Acceleration */
+    {0x6084, 0x00, 32}, /* Profile Target Deceleration */
+
+    {0x6041, 0x00, 16}, /* Status Word */
+    {0x6061, 0x00, 8}, /* Modes of Operation display */
+    {0x6064, 0x00, 32}, /* Position Actual Value */
+    {0x60FD, 0x00, 32}, /* Digital Inputs */
+};
+
+ec_pdo_entry_info_t pdo_entries_tx3[] = {
+    {0x6040, 0x00, 16}, /* Control Word */
+    {0x6060, 0x00, 8}, /* ModeOfOperation */
+    {0x6083, 0x00, 32}, /* Profile Target Acceleration */
+    {0x6084, 0x00, 32}, /* Profile Target Deceleration */
+    {0x60FF, 0x00, 32}, /* Target Velocity */
+};
+
+ec_pdo_entry_info_t pdo_entries_rx2[] = {
+    {0x6041, 0x00, 16}, /* Status Word */
+    {0x6061, 0x00, 8}, /* Modes of Operation display */
+    {0x606C, 0x00, 32}, /* Velocity Actual Value */
+    {0x60FD, 0x00, 32}, /* Digital Inputs */
+};
+
+ec_pdo_info_t pdos[] = {
+    {0x1600, 3, pdo_entries + 0}, /* Receive PDO 1 */
+    {0x1601, 6, pdo_entries + 0}, /* Receive PDO 2 */
+    {0x1602, 5, pdo_entries_tx3}, /* Receive PDO 3 */
+    {0x1a00, 4, pdo_entries + 6}, /* Transmit PDO 1 */
+    {0x1a01, 4, pdo_entries_rx2}, /* Transmit PDO 2 */
+};
+
+ec_sync_info_t syncs[] = {
+    {0, EC_DIR_OUTPUT, 0, NULL, EC_WD_ENABLE},
+    {1, EC_DIR_INPUT, 0, NULL, EC_WD_ENABLE},
+    {2, EC_DIR_OUTPUT, 3, pdos + 0, EC_WD_ENABLE},
+    {3, EC_DIR_INPUT, 2, pdos + 3, EC_WD_ENABLE},
+    {0xff}
+};
+
 void EthercatSlave::init(std::string slave, ros::NodeHandle &n)
 {
 
     slave_id_ = slave;
     std::string slave_root_loc = std::string("/ethercat_slaves/") + slave + "/";
 
+    //<editor-fold desc="Parameters">
     while (!n.getParam(slave_root_loc + "vendor_id", vendor_id_))
     {
         ROS_INFO("Waiting the parameter server to initialize\n");
@@ -107,13 +159,28 @@ void EthercatSlave::init(std::string slave, ros::NodeHandle &n)
     {
         ROS_FATAL("Failed to get param 'slave_root_loc + output_port'\n");
     }
+    //</editor-fold>
+
     ethercat_slave_ = ecrt_master_slave_config(master, alias_, position_, vendor_id_, product_code_);
+
     if (!ethercat_slave_)
     {
         ROS_FATAL("Failed to get slave configuration.\n");
         exit(1);
     }
-    pdo_out_ = ecrt_slave_config_reg_pdo_entry(ethercat_slave_, output_port_, 1, domain1, NULL);
+//    ECR60_remap(ethercat_slave_);
+    // manual PDO configuration
+    
+    int retval = ecrt_slave_config_pdos(ethercat_slave_, EC_END, syncs);
+    if (retval < 0) {
+      ROS_FATAL("Failed to configure PDOs.\n");
+      exit(1);
+    }
+
+    ecrt_slave_config_sdo32(ethercat_slave_, 0x2000, 0x00, 1000);
+
+    pdo_out_ = ecrt_slave_config_reg_pdo_entry(ethercat_slave_, output_port_, 0, domain1, NULL);
+    ROS_INFO("PDO out config %d.\n", pdo_out_);
     if (pdo_out_ < 0)
     {
         ROS_FATAL("Failed to configure pdo out.\n");
@@ -121,7 +188,7 @@ void EthercatSlave::init(std::string slave, ros::NodeHandle &n)
     }
     ROS_INFO("Offset pdo out is: %d\n", pdo_out_);
 
-    pdo_in_ = ecrt_slave_config_reg_pdo_entry(ethercat_slave_, input_port_, 1, domain1, NULL);
+    pdo_in_ = ecrt_slave_config_reg_pdo_entry(ethercat_slave_, input_port_, 0, domain1, NULL);
     if (pdo_in_ < 0)
     {
         ROS_FATAL("Failed to configure pdo in.\n");

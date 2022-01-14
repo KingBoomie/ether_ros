@@ -1,10 +1,12 @@
 Header header
-int16 hip_angle
-int16 desired_hip_angle
-uint16 time
-int16 knee_angle
-int16 desired_knee_angle
-int16 PWM10000_knee
-int16 PWM10000_hip
-int32 velocity_knee1000
-int32 velocity_hip1000
+
+uint16 rx1_status
+uint8  rx1_mode_of_operation
+uint32 rx1_position
+uint32 rx1_digital_inputs
+
+uint16 rx2_status
+uint8  rx2_mode_of_operation
+uint32 rx2_velocity
+uint32 rx2_digital_inputs
+

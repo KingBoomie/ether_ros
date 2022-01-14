@@ -136,37 +136,39 @@ public:
     It's used from the EthercatCommd service, to know if a user stops/starts an already stopped/started EthercatCommunicator.
 
 */
-/** \fn void init(ros::NodeHandle &n)
+  static bool has_running_thread();
+
+/**
     \brief Initializes the main thread.
 
     Mostly makes ready the attributes of the realtime thread, before running.
     \param n The ROS Node Handle
 
 */
-/** \fn void start()
-    \brief Starts the main thread.
+  void init(ros::NodeHandle &n);
+
+
+/**
+    @brief Starts the main thread.
 
     The function that actually starts the realtime thread. The realtime attributes have been set from \a init.
     Implements the basic realtime communication (Tx/Rx) with the EtherCAT slaves.
     Doesn't change the output PDOs. Basic state machine:
-    -  Receive the new PDOs in domain1_pd from the IgH Master Module (and therefore from the EtherCAT slaves)
-    - Move to the domain_pd the output data of process_data_buf, safely
-    - Publish the "raw" data (not linked to EtherCAT variables) in PDOs received from the domain1_pd, to the /ethercat_data_raw topic
-    - Synchronize the DC of every slave (every \a count'nth cycle)
-    - Send the new PDOs from domain1_pd to the IgH Master Module (and then to EtherCAT slaves)
-    \see void init(ros::NodeHandle &n)
-
+    \li Receive the new PDOs in domain1_pd from the IgH Master Module (and therefore from the EtherCAT slaves)
+    \li Move to the domain_pd the output data of process_data_buf, safely
+    \li Publish the "raw" data (not linked to EtherCAT variables) in PDOs received from the domain1_pd, to the /ethercat_data_raw topic
+    \li Synchronize the DC of every slave (every \a count'nth cycle)
+    \li Send the new PDOs from domain1_pd to the IgH Master Module (and then to EtherCAT slaves)
+    @see EthercatCommunicator::init(ros::NodeHandle)
 */
-/** \fn void stop()
+  void start();
+
+/**
     \brief Stops the main thread.
 
     This function stops the execution of the realtime thread. The mechanism for stopping it,
     is provided by the POSIX API. Search for \a pthread_testcancel() and other related functions.
-
 */
-  static bool has_running_thread();
-  void init(ros::NodeHandle &n);
-  void start();
   void stop();
 };
 #endif /* ETH_COM_LIB_H */
