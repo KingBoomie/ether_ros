@@ -48,6 +48,7 @@
 #include <iostream>
 #include <string>
 #include <ether_ros/PDOOut.h>
+#include <bitset>
 
 
 void PDOOutListener::pdo_out_callback(const ether_ros::PDOOut::ConstPtr &new_var)
@@ -117,6 +118,8 @@ void PDOOutListener::modify_pdo_variable(int slave_id, const ether_ros::PDOOut::
     if (type == ether_ros::PDOOut::TX1) {
         uint8_t *dataPtr = (process_data_buf +
                                                slave_id * (num_process_data_out + num_process_data_in) + TX1_INDEX);
+
+        ROS_INFO_STREAM("changed pdo out to: status: " << std::bitset<16>(new_var->tx1_control_word) << "\n\tmoo: " << new_var->tx1_mode_of_operation << "\n\ttarget: " << new_var->tx1_target_position);
 
         EC_WRITE_U16(dataPtr + 0, new_var->tx1_control_word);
         EC_WRITE_U8 (dataPtr + 2, new_var->tx1_mode_of_operation);
